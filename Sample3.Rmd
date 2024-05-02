@@ -1,0 +1,66 @@
+---
+title: "Rens_HW_Wk7"
+output: html_document
+date: "2024-03-02"
+---
+
+## Load Libraries
+
+```{r Loading Libraries}
+# Load libraries
+library(rio)
+library(dplyr)
+library(ggplot2)
+library(factoextra)
+library(cluster)
+```
+
+## Import and View the Data
+
+```{r Importing Data}
+# Import and view the data
+data <- import("~/School/Predictive Modeling/CreditCards.csv")
+
+head(data)
+summary(data)
+dim(data)
+```
+
+Looks like a lot of numbers to me. The instructions say to remove the CUST_ID column, but I don't see any column by that name. Judging by the information on the Kaggle web page I am going to make an educated guess that the "V1" column is a re-naming of the CUST_ID column. It's just a sequentially increasing variable. I'll go ahead and remove the "V1" column.
+
+```{r Removing V1}
+# Removed the "V1" column
+data <- subset(data, select = -c(V1))
+summary(data)
+```
+
+Looks good!
+
+## Clustering
+
+Let's determine the ideal number of clusters for the model.
+
+```{r Finding Optimal Cluster Count}
+# Model the appropriate number of clusters
+fviz_nbclust(data, kmeans, method="gap_stat")
+```
+
+...aaannnnnd we're back in action. That took a little while. This is telling me that the optimal number of clusters is 2, so lets get a model going with two clusters and see what happens.
+
+```{r Modeling Clusters}
+# Create te model and visualize the results
+km.cc <- kmeans(data, 2, nstart=25)
+fviz_cluster(km.cc, data)
+```
+
+It's a little difficult to read, but I can see - generally speaking - what it's doing. We have our common core of spenders, and the outliers who are, for better or worse, more extravagant spenders. This can be seen by taking a look at the centroids for each variable. Let's do that really quick.
+
+```{r Displaying Centroids}
+# Display the cluster centers
+km.cc$centers
+```
+
+Group 1 is our core group of spenders and you can see that they have lower balances, purchase amounts, purchase frequencies, etc. that the second group. Group 2 has markedly higher numbers for all those variables (they're spending more) while demonstrating lower percentages of full payments (they're more likely to carry a balance) over essentially the same tenure. One side note is that group 2 does have a significantly higher credit limit, which could be indicative of better spending habits, but could also be indicative of significantly higher income which does *not* necessarily imply better spending habits.
+ 
+# FIN
+ 

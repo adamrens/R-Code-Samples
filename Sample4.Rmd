@@ -1,0 +1,59 @@
+---
+title: "Final_Thoughts"
+output: html_document
+date: "2024-03-04"
+---
+
+# What I learned each week
+
+### Week 1
+
+**1** - I learned about the Rmarkdown notebook I had never used it before, so it was new to me at the beginning of the class. I have since grown to love it in it's simplicity, versatility, and effectiveness.
+
+**2** - I learned more about the bias/variance tradeoff. I was already aware of the concept, but the readings in week 1 helped to solidify the relationship of bias and varianace to over fitting and under fitting.
+
+### Week 2
+
+**1** - I was re-introduced to ggplot2. my first introduction was during my intro to R class. I have to admit that I wasn't a huge fan of ggplot2 back then, but I have since grown to  love it.
+
+**2** - I learned a couple new ways to deal with missing values. specifically, I had never even thought about what to do with missing values when dealign with certain types of classification problems, but creating a new "unknown" category seems quite reasonable.
+
+### Week 3
+
+**1** - I was re-introduced to the math behind linear regressoin and reminded that, for all of the seeming complexity, it really isn't all that conplex if you know what you're looking at.
+
+**2** - I became very familiar with creating linear models in R, which was very educational. I had done it before in my intro to R class, but never so many times and in such different ways. It was excellkent to get some good practice with LMs.
+
+### Week 4
+
+**1** - Much the same as in week 3, I was introdiced to the math behind logistic regression and reminded of where and when to use logistic regression versus linear regession models. 
+
+**2** - Again, getting some really good practice with running logistic regression models in R was very, very good. There is very little that is more beneficial than getting hands-on expreience.
+
+### Week 5
+
+**1** - I was introduced to the concept of a generalized linear model. I was unaware of them before this class, but thier utility and simplicity make them excellent choices to many applications. It was nice to find that they are very similar to logistic regression models as far as implementation is concerned.
+
+**2** - I was very helpful to able to apply the concepts of a Poisson distribution and Gamma distribution to data on which I could work. I had, of course, learned about them in my statistics classes, but to work with them more directly was very helpful for me.
+
+### Week 6
+
+**1** - Decision trees and random  forests were something I had done in Python before, but now R. It was very educational to learn the libraries and techniques for constructing them in R. I learned it was easier than I would have expected and very useful.
+
+**2** - Gradient boosting machines are pretty awesome, and although I haven't yet delved into them on my own time (I plan to), I can see how they would be immensely powerful in many scenarios. I spent a great deal of time researching them in my off time, and plan to do more in the future.
+
+### Week 7
+
+**1** - Clustering was something with which I was at least a little familiar going into the class, but it was all new to me in R. Learning the R techniques and how to visualize them was substantially educational for me.
+
+**2** - I also learned a little more about the hyperparameters of clustering, slicing data to make the model more readable, and general manipulation of models. This could apply to any week, but I thought I'd mention it here since I was alread a bit familiary with clustering.
+
+### Week 8
+
+**1** - It was reiterated to me how important it is to porperly and thoroughly document all you work. I have experienced this in my own work, where after dropping a project for a little while, on coming back to it I find that I can hardly remember some significant details that were very clear to me at the time.
+
+**2** - GitHub. Yes, please. I'm on my last class before I graduate and someone finally mentions the enigma that is git and GitHub. To be fair, I already did have an account, but I had no idea  how to use it and never had. This class was the push I needed to start my GitHub experience, and I will be using it  going forward to ensure I gain proficiency and don't get rusty.
+
+# I truly appreciate all your hard work - 
+# Thanks for an amazing class!
+

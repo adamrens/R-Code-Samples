@@ -1,0 +1,202 @@
+---
+title: "Rens_HW_Wk5"
+output: html_document
+date: "2024-02-16"
+---
+
+## The Basics
+Let's take care of those real quick.
+```{r}
+# Load Libraries
+library(rio)
+library(dplyr)
+library(ggplot2)
+
+# Import the data and take a look at it
+data <- import("~/School/Predictive Modeling/pedesterian.csv")
+head(data)
+summary(data)
+```
+
+It look like I will want to convert "weather" and "weekday" to factors.
+
+```{r}
+data$weather <- factor(data$weather)
+data$weekday <- factor(data$weekday)
+summary(data)
+```
+
+Excellent. Now let's visualize some things.
+
+```{r}
+# Plot of day count by each weather condition
+ggplot(data, aes(x=weather, fill=weather)) + 
+  geom_bar() + 
+  theme(axis.text.x = element_text(angle = 45, hjust = 1)) + 
+  labs(title="Day Count by Weather Condition")
+
+# Plot of pedestrian count by weather condition
+ggplot(data, aes(x=weather, y=pedestrians, fill=weather)) + 
+  geom_bar(stat="summary", fun="mean") + 
+  theme(axis.text.x = element_text(angle=45, hjust=1)) + 
+  labs(title="Pedestrian Count by Weather Condition")
+```
+
+By the looks of these charts, "clear-day", "partly-cloudy-day", "snow", and "sleet" will be rather good predictors of pedestrian traffic.
+
+```{r}
+# Plot of pedestrians by temperature
+ggplot(data, aes(x=temperature, y=pedestrians, fill=temperature)) + 
+  geom_col() +
+  scale_fill_gradient(low="blue", high="orange", guide="colorbar") +
+  labs(title="Pedestrain Count by Temperature")
+
+# Plot of pedestrians by temp forecast
+ggplot(data, aes(x=temp_forecast, y=pedestrians, fill=temp_forecast)) + 
+  geom_col() +
+  scale_fill_gradient(low="blue", high="orange", guide="colorbar") +
+  labs(title="Pedestrain Count by Temperature Forecast")
+```
+
+Here I can see that extreme temperatures (<~45 and >~80) will be good predictors of pedestrian traffic. I can also see that a forecast/actual temperature of ~75 gets a lot of people walking. Now let's take a look at how the days or the week and hour of the day affect pedestrian traffic.
+
+```{r}
+# Plot of pedestrian traffic by day
+ggplot(data, aes(x=weekday, y=pedestrians, fill=weekday)) +
+  geom_bar(stat="summary", fun="mean") +
+  labs(title="Pedestrian Count by Weekday")
+
+# Plot of pedestrian count by hour of the day
+ggplot(data, aes(x=hour, y=pedestrians, fill=hour)) +
+  geom_bar(stat="summary", fun="mean") +
+  scale_x_continuous(breaks = unique(data$hour)) +
+  labs(title="Pedestrian Count by Hour")
+```
+
+This gives us a pretty good idea of which hours of the day will be most predictive. Additionally, Saturday seems like the most popular day to travel on foot, with Tuesday, Wednesday, and Thursday seeming to indicate slightly less traffic.
+
+Alright, now that we have a pretty good idea of what the data looks like, lets split the data...
+
+```{r}
+# Split the data into train and test sets
+set.seed(117)
+
+index <- sample(1:nrow(data), size = round(0.7*nrow(data)))
+
+train <- data[index, ]
+test <- data[-index, ]
+```
+
+...and train a GLM to predict pedestrian traffic by weekday.
+
+```{r}
+# GLM for predicting pedestrian traffic by weekday
+mod1 <- glm(pedestrians ~ weekday,
+            family = poisson(link="log"),
+            train)
+
+summary(mod1)
+
+# Test the Poisson model 
+test_mod1 <- glm(pedestrians ~ weekday,
+                 family = poisson(link="log"),
+                 test)
+# Create a new variable for the predictions
+test$mod1_pred <-predict(test_mod1, test, type="response")
+
+### Model the results ###
+test %>%
+  group_by(weekday) %>% 
+  summarise(actual=sum(pedestrians),
+            predicted=sum(mod1_pred)) %>% 
+  ggplot(aes(x=weekday)) +
+  # Actual pedestrian counts in BLACK
+  geom_line(aes(y=actual), color="black", group=1) +
+  # Predicted pedestrian counts in RED DASHED, offset for visibility
+  geom_line(aes(y=predicted, color="red", x=as.numeric(weekday) + 0.05), linetype = "dashed", group = 1) + 
+  labs(title="Actual Vs. Predicted Pedestrian Traffic by Weekday")
+
+```
+
+This model shows remarkable predictive power - the predictions are exactly the same as the empirical data, which is impressive. Let's change it up a bit and see how we perform with more predictors.
+
+```{r}
+mod2 <- glm(pedestrians ~ weather + weekday + temperature + hour,
+            family = poisson(link="log"),
+            train)
+
+summary(mod2)
+```
+
+This model looks pretty good by the error values, so lets see what kind of predictions we can get out ot of it.
+
+```{r}
+# Create a model using four predictor variables
+test_mod2 <- glm(pedestrians ~ weather + weekday + temperature + hour,
+                 family = poisson(link="log"),
+                 train)
+
+# Create a new variable for the model predictions
+test$mod2_pred <- predict(mod2, test, type="response")
+
+##########################
+####### BY WEATHER #######
+##########################
+test %>%
+  group_by(weather) %>%
+  summarise(actual=sum(pedestrians),
+            predicted=sum(mod2_pred)) %>%
+  ggplot(aes(x=weather)) +
+  # Actual pedestrian counts in BLACK
+  geom_line(aes(y=actual), color="black", group=1) +
+  # Predicted pedestrian counts in RED DASHED, offset for visibility
+  geom_line(aes(y=predicted, color="red", x=as.numeric(weather) + 0.05),
+            linetype="dashed", group=2) +
+  theme(axis.text.x = element_text(angle=45, hjust=1)) + 
+  labs(title="Actual Vs. Predicted Pedestrian Traffic by Weather Condition")
+#------------------------------------------------------------------------------#
+
+##########################
+####### BY WEEKDAY #######
+##########################
+test %>%
+  group_by(weekday) %>%
+  summarise(actual=sum(pedestrians),
+            predicted=sum(mod2_pred)) %>%
+  ggplot(aes(x=weekday)) +
+  # Actual pedestrian counts in BLACK
+  geom_line(aes(y=actual), color="black", group=1) +
+  # Predicted pedestrian counts in RED DASHED, offset for visibility
+  geom_line(aes(y=predicted, color="red", x=as.numeric(weekday) + 0.05),
+            linetype="dashed", group=2) +
+  theme(axis.text.x = element_text(angle=45, hjust=1)) + 
+  labs(title="Actual Vs. Predicted Pedestrian Traffic by Weekday")
+#------------------------------------------------------------------------------#
+```
+
+This model is very good too, but not quite as precise as the previous model with only one predictor. The model by weather condision is particularly good, while the model by weekday is notably worse than the previous version. Let's take a look at some more models.
+
+```{r}
+###########################
+######### BY HOUR #########
+###########################
+test %>%
+  group_by(hour) %>%
+  summarise(actual=sum(pedestrians),
+            predicted=sum(mod2_pred)) %>%
+  ggplot(aes(x=hour)) +
+  # Actual pedestrian counts in BLACK
+  geom_line(aes(y=actual), color="black", group=1) +
+  # Predicted pedestrian counts in RED DASHED
+  geom_line(aes(y=predicted), color="red",
+            linetype="dashed", group=2) +
+  scale_x_continuous(breaks = unique(data$hour)) +
+  theme(axis.text.x = element_text(angle=45, hjust=1)) + 
+  labs(title="Actual Vs. Predicted Pedestrian Traffic by hour")
+#------------------------------------------------------------------------------#
+```
+
+...not so good.
+
+At any rate, we can see from these models that the weather has a strong effect on pedestrian traffic. Specific weather conditions and temperature both strongly predict pedestrian traffic. We can also gain valuable information from the day of the week and the time of day, but those aren't quite so precise in their predictive power.
+

@@ -1,0 +1,153 @@
+---
+title: "Rens_HW_Wk6"
+output: html_document
+date: "2024-02-23"
+---
+## Getting Started
+Load libraries.
+```{r}
+# Load libraries
+library(rio)
+library(dplyr)
+library(ggplot2)
+library(tree)
+library(randomForest)
+```
+
+Import the data.
+```{r}
+# Import and view data
+data <- import("~/School/Predictive Modeling/Bike.csv")
+head(data)
+summary(data)
+```
+
+Split the data in train and test sets.
+```{r}
+# Split the data
+index <- sample(1:nrow(data), nrow(data)*0.667)
+
+# Train = 2/3
+train <- data[index, ]
+# Test = 1/3
+test <- data[-index, ]
+```
+
+## Build a Decision Tree Model
+Create the decision tree.
+```{r}
+# Create the model
+bike_tree <- tree(count ~ season +
+                    holiday +
+                    workingday +
+                    temp +
+                    atemp +
+                    humidity +
+                    windspeed +
+                    casual +
+                    registered,
+                  data=train)
+
+summary(bike_tree)
+```
+
+Now let's plot the tree.
+```{r}
+# This plot was pretty tight. I tried to make it more readable, but it's not perfect
+plot(bike_tree, cex=0.4)
+text(bike_tree, pretty=0, cex=0.4)
+```
+
+Let's do some cross-validation.
+```{r}
+# Cross-validate
+cv.bike_tree <- cv.tree(bike_tree)
+plot(cv.bike_tree$size, cv.bike_tree$dev, type='b')
+```
+
+This looks pretty good after only four leaves. I could be thorough and leave 5, but I think for this assignment I'll stick with 4. Let's get pruning.
+
+```{r}
+# Prune to 4 leaves
+bike_tree.prune <- prune.tree(bike_tree, best=4)
+plot(bike_tree.prune)
+text(bike_tree.prune, pretty=0)
+```
+
+Make predictions.
+
+```{r}
+# Make predictions and cmpute MSE
+tree_yhat <- predict(bike_tree.prune, newdata=test)
+data.test <- test[, "count"]
+tree_mse <- mean((tree_yhat - data.test)^2)
+tree_mse
+```
+
+Let's check the results of pruning to 3 and 5 leaves just for fun.
+
+```{r}
+# Prune to 3 leaves
+bike_tree.prune3 <- prune.tree(bike_tree, best=3)
+plot(bike_tree.prune3)
+text(bike_tree.prune3, pretty=0)
+
+tree_yhat.prune3 <- predict(bike_tree.prune3, newdata=test)
+tree_mse.prune3 <- mean((tree_yhat.prune3 - data.test)^2)
+tree_mse.prune3
+```
+
+```{r}
+# Prune to 5 leaves
+bike_tree.prune5 <- prune.tree(bike_tree, best=5)
+plot(bike_tree.prune5, cex=0.7)
+text(bike_tree.prune5, cex=0.7, pretty=0)
+
+tree_yhat.prune5 <- predict(bike_tree.prune5, newdata=test)
+tree_mse.prune5 <- mean((tree_yhat.prune5 - data.test)^2)
+tree_mse.prune5
+```
+
+It was a good idea to prune to at least 4 leaves, as a decrease to 3 leaves results in a huge increase to the MSE. That said, an increase to 5 leaves saw the MSE drop by over 1000, which is quite a bit better. I'm honestly not sure what constitutes a significant change in this instance, but I don't see any computational reason to use 4 leaves instead of 5, so I would think that increasing the leaf count would be prudent. 
+
+Now let's build a random forest model to do the same job.
+
+## Build a Random Forest Model
+```{r}
+# Build the random forest model
+bike_rf <- randomForest(count ~ season +
+                    holiday +
+                    workingday +
+                    temp +
+                    atemp +
+                    humidity +
+                    windspeed +
+                    casual +
+                    registered,
+                  data=train,
+                  importance=TRUE)
+
+# Make predictions
+rf_yhat <- predict(bike_rf, newdata=test)
+
+# Compute MSE
+rf_mse <- mean((rf_yhat - data.test)^2)
+rf_mse
+```
+
+All that work trying to reduce the MSE of the tree model by 1000 and the random forest model spits out an MSE of 142.3. Let's see what the most important variables were.
+
+```{r}
+impt_vars <- importance(bike_rf)
+impt_vars
+```
+
+It looks like the "registered" variable is by far the most important as far as predicting rental count is concerned. Let's visualize it on a plot.
+
+```{r}
+varImpPlot(bike_rf, cex=0.7)
+```
+
+It's pretty clear from this plot why the tree model only used the "registered" and "casual" variables. They are indeed the more important.
+
+# FIN
